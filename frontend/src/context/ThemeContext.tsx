@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
-type Theme = "default" | "dark";
+export type Theme = "default" | "dark";
 
 interface ThemeContextType {
   currentTheme: Theme;
