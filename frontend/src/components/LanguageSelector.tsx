@@ -2,11 +2,13 @@
 
 import { useTranslation } from "../context/TranslationContext";
 
+type Language = "english" | "tamil" | "hindi";
+
 export default function LanguageSelector() {
   const { currentLang, setCurrentLang } = useTranslation();
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedLang = e.target.value as "english" | "tamil" | "hindi";
+    const selectedLang = e.target.value as Language;
     setCurrentLang(selectedLang);
   };
 
