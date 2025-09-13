@@ -1,0 +1,26 @@
+@layer base {
+  body {
+    @apply antialiased;
+    background-color: var(--background-color);
+    color: var(--color-text);
+    font-family: Inter, system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl font-bold;
+    color: var(--color-primary-text);
+  }
+
+  h3 {
+    @apply text-sm md:text-lg font-medium;
+    color: var(--color-secondary-text);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply flex-1 px-6 py-2 rounded-lg shadow text-center transition;
+    background-color: var(--color-primary);
+    color: var(--button-text);
+  }
+}
