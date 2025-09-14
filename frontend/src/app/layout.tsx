@@ -4,6 +4,7 @@ import { ThemeProvider } from "../context/ThemeContext";
 import ThemeSwitcher from "../components/ThemeSwitcher";
 import { TranslationProvider } from "../context/TranslationContext";
 import LanguageSelector from "../components/LanguageSelector";
+import { AuthProvider } from "../context/AuthContext";
 import { Inter } from "next/font/google";
 
 const inter = Inter({
@@ -26,18 +27,20 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <TranslationProvider>
-            {children}
-            <footer
-              style={{
-                padding: "1rem",
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "1rem",
-              }}
-            >
-              <LanguageSelector />
-              <ThemeSwitcher />
-            </footer>
+            <AuthProvider> {/* <- Wrap children with AuthProvider */}
+              {children}
+              <footer
+                style={{
+                  padding: "1rem",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "1rem",
+                }}
+              >
+                <LanguageSelector />
+                <ThemeSwitcher />
+              </footer>
+            </AuthProvider>
           </TranslationProvider>
         </ThemeProvider>
       </body>
