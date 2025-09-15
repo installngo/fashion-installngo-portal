@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LoadingProvider } from "../context/LoadingContext";
+import { ToastProvider } from "../context/ToastContext";
 import { ThemeProvider } from "../context/ThemeContext";
-import ThemeSwitcher from "../components/ThemeSwitcher";
 import { TranslationProvider } from "../context/TranslationContext";
-import LanguageSelector from "../components/LanguageSelector";
 import { AuthProvider } from "../context/AuthContext";
 import { Inter } from "next/font/google";
 
@@ -23,26 +23,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.className}>
+    <html
+      lang="en"
+      className={inter.className}
+      style={{ backgroundColor: "#F5F5F5" }}
+    >
       <body>
-        <ThemeProvider>
-          <TranslationProvider>
-            <AuthProvider> {/* <- Wrap children with AuthProvider */}
-              {children}
-              <footer
-                style={{
-                  padding: "1rem",
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "1rem",
-                }}
-              >
-                <LanguageSelector />
-                <ThemeSwitcher />
-              </footer>
-            </AuthProvider>
-          </TranslationProvider>
-        </ThemeProvider>
+        <LoadingProvider>
+          <ToastProvider>
+            <ThemeProvider>
+              <TranslationProvider>
+                <AuthProvider>{children}</AuthProvider>
+              </TranslationProvider>
+            </ThemeProvider>
+          </ToastProvider>
+        </LoadingProvider>
       </body>
     </html>
   );
