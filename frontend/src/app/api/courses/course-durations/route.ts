@@ -56,9 +56,9 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 200 });
-  } catch (err: any) {
+  } catch {
     return NextResponse.json(
-      { error: err.message || "Unexpected server error" },
+      { error: "Unexpected server error" },
       { status: 500 }
     );
   }

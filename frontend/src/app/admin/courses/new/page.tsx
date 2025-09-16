@@ -8,6 +8,27 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Modal from "@/components/ui/Modal";
 
+// Type Definitions
+type Category = {
+  category_id: string;
+  category_title: string;
+};
+
+type Subcategory = {
+  subcategory_id: string;
+  subcategory_title: string;
+};
+
+type CourseType = {
+  type_code: string;
+  type_name: string;
+};
+
+type Duration = {
+  duration_code: string;
+  duration_name: string;
+};
+
 export default function NewCoursePage() {
   const router = useRouter();
 
@@ -15,18 +36,18 @@ export default function NewCoursePage() {
   const [courseTitle, setCourseTitle] = useState("");
   const [courseDescription, setCourseDescription] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
-  const [subcategories, setSubcategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [courseTypes, setCourseTypes] = useState<any[]>([]);
+  const [courseTypes, setCourseTypes] = useState<CourseType[]>([]);
   const [selectedType, setSelectedType] = useState("");
-  const [durations, setDurations] = useState<any[]>([]);
+  const [durations, setDurations] = useState<Duration[]>([]);
   const [selectedDuration, setSelectedDuration] = useState("");
   const [price, setPrice] = useState<number>(0);
   const [discountPrice, setDiscountPrice] = useState<number>(0);
   const [effectivePrice, setEffectivePrice] = useState<number>(0);
-  const [status, setStatus] = useState("DRAFT");
+  const [status, setStatus] = useState<"DRAFT" | "ACTIVE" | "SUSPENDED">("DRAFT");
 
   // Modal states
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -38,7 +59,7 @@ export default function NewCoursePage() {
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
-      .then((data) => setCategories(data));
+      .then((data: Category[]) => setCategories(data));
   }, []);
 
   // Fetch subcategories when category changes
@@ -46,7 +67,7 @@ export default function NewCoursePage() {
     if (selectedCategory) {
       fetch(`/api/subcategories?categoryId=${selectedCategory}`)
         .then((res) => res.json())
-        .then((data) => setSubcategories(data));
+        .then((data: Subcategory[]) => setSubcategories(data));
     }
   }, [selectedCategory]);
 
@@ -54,7 +75,7 @@ export default function NewCoursePage() {
   useEffect(() => {
     fetch("/api/course-types")
       .then((res) => res.json())
-      .then((data) => setCourseTypes(data));
+      .then((data: CourseType[]) => setCourseTypes(data));
   }, []);
 
   // Fetch durations when course type changes
@@ -62,19 +83,19 @@ export default function NewCoursePage() {
     if (selectedType) {
       fetch(`/api/course-durations?typeCode=${selectedType}`)
         .then((res) => res.json())
-        .then((data) => setDurations(data));
+        .then((data: Duration[]) => setDurations(data));
     }
   }, [selectedType]);
 
   // Auto calculate effective price
   useEffect(() => {
-    let finalPrice = Number(price) - Number(discountPrice);
+    let finalPrice = price - discountPrice;
     if (finalPrice < 0) finalPrice = 0;
     setEffectivePrice(finalPrice);
   }, [price, discountPrice]);
 
   // Submit course
-  const handleSubmit = async (statusCode: string) => {
+  const handleSubmit = async (statusCode: "DRAFT" | "ACTIVE" | "SUSPENDED") => {
     const payload = {
       course_title: courseTitle,
       course_description: courseDescription,
@@ -112,8 +133,8 @@ export default function NewCoursePage() {
     });
     setCategoryModalOpen(false);
     setNewCategoryTitle("");
-    // refresh categories
-    fetch("/api/categories").then((res) => res.json()).then(setCategories);
+    const updatedCategories: Category[] = await (await fetch("/api/categories")).json();
+    setCategories(updatedCategories);
   };
 
   // Add subcategory
@@ -126,8 +147,8 @@ export default function NewCoursePage() {
     });
     setSubcategoryModalOpen(false);
     setNewSubcategoryTitle("");
-    // refresh subcategories
-    fetch(`/api/subcategories?categoryId=${selectedCategory}`).then((res) => res.json()).then(setSubcategories);
+    const updatedSubcategories: Subcategory[] = await (await fetch(`/api/subcategories?categoryId=${selectedCategory}`)).json();
+    setSubcategories(updatedSubcategories);
   };
 
   return (
@@ -205,7 +226,7 @@ export default function NewCoursePage() {
           <Input type="number" placeholder="Effective" value={effectivePrice} readOnly />
         </div>
 
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="p-2 border border-gray-300 rounded-lg w-full">
+        <select value={status} onChange={(e) => setStatus(e.target.value as "DRAFT" | "ACTIVE" | "SUSPENDED")} className="p-2 border border-gray-300 rounded-lg w-full">
           <option value="DRAFT">Draft</option>
           <option value="ACTIVE">Active</option>
           <option value="SUSPENDED">Suspended</option>
