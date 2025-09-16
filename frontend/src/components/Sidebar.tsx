@@ -29,17 +29,18 @@ export default function Sidebar({ sidebarOpen, closeSidebar }: SidebarProps) {
       />
 
       <aside
-        className={`fixed top-14 left-0 h-[calc(100%-3.5rem)] w-60 border-r z-50 transform bg-[var(--color-light-bg)] border-[var(--color-border)] transition-transform
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:relative`}
+        className={`fixed top-16 left-6 bottom-6 w-60 bg-white rounded-2xl shadow-lg z-50 transform transition-transform
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:relative md:top-0 md:left-0 md:bottom-0 md:translate-x-0 md:rounded-none md:shadow-none`}
       >
-        <nav className="flex flex-col p-4 space-y-2">
+        <nav className="flex flex-col p-4 space-y-2 h-full overflow-auto">
           {navItems.map((item) => {
             const active = pathname === item.path;
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`px-3 py-2 rounded-md font-medium ${
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
                   active
                     ? "bg-[var(--color-primary)] text-[var(--color-text-inverse)]"
                     : "text-[var(--color-text-secondary)] hover:bg-[var(--color-background)] hover:text-[var(--color-primary)]"

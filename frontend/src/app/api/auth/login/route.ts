@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { supabaseAdmin } from "@lib/supabaseAdminClient";
+import { supabaseServer } from "@/lib/supabaseServer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing email or password" }, { status: 400 });
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabaseServer
       .from("organizations")
       .select("*")
       .eq("email_id", email_id)
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       message: "Login successful",
       organization: {
         organization_id: data.organization_id,
-        code: data.code,
+        organization_code: data.organization_code,
         full_name: data.full_name,
         email_id: data.email_id,
         status_code: data.status_code,

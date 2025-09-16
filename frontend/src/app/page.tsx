@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useLoading } from "../context/LoadingContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 
 export default function LandingPage() {
   const { t } = useTranslation();
@@ -21,7 +23,6 @@ export default function LandingPage() {
     password: "",
     confirmPassword: "",
   });
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -29,20 +30,14 @@ export default function LandingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
-    if (
-      !form.email_id ||
-      !form.password ||
-      (!isLogin && !form.full_name) ||
-      (!isLogin && !form.confirmPassword)
-    ) {
-      setError("All fields are required.");
+    if (!form.email_id || !form.password || (!isLogin && !form.full_name) || (!isLogin && !form.confirmPassword)) {
+      showToast("All fields are required.", "error");
       return;
     }
 
     if (!isLogin && form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
+      showToast("Passwords do not match.", "error");
       return;
     }
 
@@ -50,7 +45,7 @@ export default function LandingPage() {
     show();
 
     try {
-      const endpoint = isLogin ? "/api/admin/login" : "/api/admin/signup";
+      const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -60,32 +55,23 @@ export default function LandingPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || (isLogin ? "Login failed" : "Signup failed"));
+        showToast(data.error || (isLogin ? "Login failed" : "Signup failed"), "error");
         return;
       }
 
       if (isLogin) {
-        login(
-          data.token,
-          data.organization.organization_id,
-          data.organization.code
-        );
-        showToast("Login successful!", "success");
+        login(data.token, data.organization.organization_id, data.organization.organization_code, data.organization.full_name);
+        hide();
         router.push("/admin/dashboard");
+        showToast("Login successful!", "success");
       } else {
-        // signup success: switch to login
         setIsLogin(true);
-        setForm({
-          full_name: "",
-          email_id: "",
-          password: "",
-          confirmPassword: "",
-        });
+        setForm({ full_name: "", email_id: "", password: "", confirmPassword: "" });
         showToast("Signup successful! Please login.", "success");
       }
     } catch (err) {
       console.error(err);
-      setError("Something went wrong. Please try again.");
+      showToast("Something went wrong. Please try again.", "error");
     } finally {
       setLoading(false);
       hide();
@@ -93,100 +79,83 @@ export default function LandingPage() {
   };
 
   return (
-    <main className="flex min-h-screen w-full">
-      {/* Left: Welcome content */}
-      <section className="hidden md:flex flex-1 flex-col items-center text-center justify-center p-12">
-        <h1 className="mb-2">{t("welcomeTitle")}</h1>
-        <h5>{t("welcomeSubtitle")}</h5>
-      </section>
+    <main className="min-h-screen w-full flex flex-col">
+      <div className="flex flex-1 flex-col md:flex-row items-center justify-center min-h-screen">
+        {/* Left: Welcome content hidden on mobile */}
+        <section className="hidden md:flex flex-1 flex-col items-center text-center justify-center p-12">
+          <h1 className="mb-2">{t("welcomeTitle")}</h1>
+          <h5>{t("welcomeSubtitle")}</h5>
+        </section>
 
-      {/* Right: Login/Signup form */}
-      <section className="flex flex-1 items-center justify-center p-8">
-        <div className="w-full max-w-md bg-white p-10 rounded-xl shadow-md">
-          <h2 className="text-2xl font-bold text-center text-[#D97B66] mb-6">
-            {isLogin ? "Login" : "Sign Up"}
-          </h2>
-          {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <input
-                type="text"
-                name="full_name"
-                placeholder="Full Name"
-                value={form.full_name}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#D97B66]"
-              />
-            )}
-            <input
-              type="email"
-              name="email_id"
-              placeholder="Email"
-              value={form.email_id}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#D97B66]"
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#D97B66]"
-            />
-            {!isLogin && (
-              <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#D97B66]"
-              />
-            )}
-            <button
-              type="submit"
-              className={`w-full p-3 rounded-md font-medium text-white ${
-                loading
-                  ? "bg-[#D97B66]/70 cursor-not-allowed"
-                  : "bg-[#C26457] hover:bg-[#D97B66]"
-              } transition`}
-              disabled={loading}
-            >
-              {loading
-                ? isLogin
-                  ? "Logging in..."
-                  : "Signing up..."
-                : isLogin
-                ? "Login"
-                : "Sign Up"}
-            </button>
-          </form>
+        {/* Right: Login/Signup form */}
+        <section className="flex flex-1 items-center justify-center w-full p-4">
+          <div className="w-full max-w-md bg-white p-10 sm:p-6 rounded-xl shadow-md">
+            <h2 className="text-center mb-4">{isLogin ? "Login" : "Sign Up"}</h2>
 
-          <p className="mt-4 text-center text-[#707B93]">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <span
-              className="text-[#D97B66] cursor-pointer hover:underline"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setForm({
-                  full_name: "",
-                  email_id: "",
-                  password: "",
-                  confirmPassword: "",
-                });
-                setError("");
-              }}
-            >
-              {isLogin ? "Sign Up" : "Login"}
-            </span>
-          </p>
-        </div>
-      </section>
-      <footer className="absolute bottom-4 left-1/2 -translate-x-1/2 opacity-70">
-        <h6>
-          © {new Date().getFullYear()} Installngo. {t("rightsReserved")}
-        </h6>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <Input
+                  variant="text"
+                  fullWidth
+                  placeholder="Full Name"
+                  name="full_name"
+                  value={form.full_name}
+                  onChange={handleChange}
+                />
+              )}
+              <Input
+                variant="email"
+                fullWidth
+                placeholder="Email"
+                name="email_id"
+                value={form.email_id}
+                onChange={handleChange}
+              />
+              <Input
+                variant="password"
+                fullWidth
+                placeholder="Password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+              />
+              {!isLogin && (
+                <Input
+                  variant="password"
+                  fullWidth
+                  placeholder="Confirm Password"
+                  name="confirmPassword"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                />
+              )}
+
+              <div className="flex justify-center">
+                <Button type="submit" variant="primary" fullWidth={false} disabled={loading}>
+                  {loading ? (isLogin ? "Logging in..." : "Signing up...") : isLogin ? "Login" : "Sign Up"}
+                </Button>
+              </div>
+            </form>
+
+            <h6 className="mt-4 text-center">
+              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+              <span
+                className="text-[var(--color-primary-text)] font-bold cursor-pointer hover:underline"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setForm({ full_name: "", email_id: "", password: "", confirmPassword: "" });
+                }}
+              >
+                {isLogin ? "Sign Up" : "Login"}
+              </span>
+            </h6>
+          </div>
+        </section>
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-auto text-center opacity-70 py-4">
+        <h6>© {new Date().getFullYear()} Installngo. {t("rightsReserved")}</h6>
       </footer>
     </main>
   );

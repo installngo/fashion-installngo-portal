@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 type ToastType = "success" | "error" | "info";
 
 interface Toast {
-  id: number;
+  id: string; // changed to string for unique keys
   message: string;
   type: ToastType;
 }
@@ -21,7 +21,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = (message: string, type: ToastType = "info") => {
-    const id = Date.now();
+    const id = `${Date.now()}-${Math.floor(Math.random() * 10000)}`; // unique id
     setToasts((prev) => [...prev, { id, message, type }]);
 
     setTimeout(() => {
@@ -41,7 +41,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const removeToast = (id: number) => {
+  const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 

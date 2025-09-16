@@ -9,15 +9,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Topbar */}
+      {/* Topbar with hamburger toggle */}
       <Topbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-      <div className="flex flex-1 pt-14"> {/* pt-14 = Topbar height */}
+      <div className="flex flex-1">
         {/* Sidebar */}
         <Sidebar sidebarOpen={sidebarOpen} closeSidebar={() => setSidebarOpen(false)} />
-
-        {/* Main Content */}
-        <main className="flex-1 p-4 bg-gray-50">{children}</main>
       </div>
     </div>
   );

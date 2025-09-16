@@ -1,11 +1,24 @@
 /* Default Theme */
 :root[data-theme="default"] {
+  --color-primary: #d66d50;
+
   --color-primary-text: #d66d50;
   --color-secondary-text: #707b93;
 
+  /*Primary Button*/
   --button-primary: #d66d50;
   --button-text-inverse: #ffffff;
   --button-primary-hover: #c55a40;
+
+  /*Secondary Button*/
+  --button-secondary: #e5e7eb;
+  --button-secondary-hover: #d1d5db;
+  --button-secondary-text: #1f2937;
+
+  /*Danger Button*/
+  --button-danger: #ef4444;
+  --button-danger-hover: #dc2626;
+  --button-danger-text: #ffffff;
 }
 
 /* Dark Theme */
@@ -13,8 +26,18 @@
   --color-primary-text: #d66d50;
   --color-secondary-text: #707b93;
 
-  --color-button-primary: #d66d50;
+  /*Primary Button*/
+  --button-primary: #d66d50;
+  --button-text-inverse: #ffffff;
+  --button-primary-hover: #c55a40;
 
-  --color-text-inverse: #ffffff;
-  --color-primary-hover: #c55a40;
+  /*Secondary Button*/
+  --button-secondary: #e5e7eb;
+  --button-secondary-hover: #d1d5db;
+  --button-secondary-text: #1f2937;
+
+  /*Danger Button*/
+  --button-danger: #ef4444;
+  --button-danger-hover: #dc2626;
+  --button-danger-text: #ffffff;
 }
