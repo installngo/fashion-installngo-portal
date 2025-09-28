@@ -2,13 +2,16 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // 🔹 Update course
-export async function PUT(req: Request, context: { params: { id: string } }) {
-  const courseId = context.params.id;
-  const body = await req.json();
+export async function PUT(req: Request) {
+  // Extract courseId from URL
+  const url = new URL(req.url);
+  const courseId = url.pathname.split("/").pop(); // gets [id] from /api/courses/[id]
 
   if (!courseId) {
     return NextResponse.json({ error: "courseId is required" }, { status: 400 });
   }
+
+  const body = await req.json();
 
   const { data, error } = await supabaseServer.rpc("manage_course", {
     p_mode: "UPDATE",
@@ -26,9 +29,10 @@ export async function PUT(req: Request, context: { params: { id: string } }) {
   return NextResponse.json(data);
 }
 
-// 🔹 Suspend course (soft disable)
-export async function PATCH(req: Request, context: { params: { id: string } }) {
-  const courseId = context.params.id;
+// 🔹 Suspend course
+export async function PATCH(req: Request) {
+  const url = new URL(req.url);
+  const courseId = url.pathname.split("/").pop();
 
   if (!courseId) {
     return NextResponse.json({ error: "courseId is required" }, { status: 400 });
@@ -43,9 +47,10 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
   return NextResponse.json({ message: "Course suspended successfully", data });
 }
 
-// 🔹 Permanently delete course
-export async function DELETE(req: Request, context: { params: { id: string } }) {
-  const courseId = context.params.id;
+// 🔹 Delete course
+export async function DELETE(req: Request) {
+  const url = new URL(req.url);
+  const courseId = url.pathname.split("/").pop();
 
   if (!courseId) {
     return NextResponse.json({ error: "courseId is required" }, { status: 400 });
