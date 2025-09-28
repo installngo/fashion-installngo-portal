@@ -3,9 +3,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 
 // 🔹 Update course
 export async function PUT(req: Request, context: { params: { id: string } }) {
-  const { params } = context;
-  const courseId = params.id;
-
+  const courseId = context.params.id;
   const body = await req.json();
 
   if (!courseId) {
@@ -28,10 +26,9 @@ export async function PUT(req: Request, context: { params: { id: string } }) {
   return NextResponse.json(data);
 }
 
-// 🔹 Suspend course (soft disable, not delete)
+// 🔹 Suspend course (soft disable)
 export async function PATCH(req: Request, context: { params: { id: string } }) {
-  const { params } = context;
-  const courseId = params.id;
+  const courseId = context.params.id;
 
   if (!courseId) {
     return NextResponse.json({ error: "courseId is required" }, { status: 400 });
@@ -48,8 +45,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
 
 // 🔹 Permanently delete course
 export async function DELETE(req: Request, context: { params: { id: string } }) {
-  const { params } = context;
-  const courseId = params.id;
+  const courseId = context.params.id;
 
   if (!courseId) {
     return NextResponse.json({ error: "courseId is required" }, { status: 400 });
