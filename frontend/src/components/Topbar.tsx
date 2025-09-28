@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Settings } from "lucide-react";
 
 interface TopbarProps {
-  toggleSidebar?: () => void; // optional for mobile
+  toggleSidebar?: () => void;
 }
 
 export default function Topbar({ toggleSidebar }: TopbarProps) {
@@ -21,7 +21,7 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 h-12 flex items-center justify-between px-4 sm:px-6
+      className="fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-4 sm:px-6
       shadow-md z-50 bg-[var(--color-primary)] text-[var(--color-text-inverse)]"
     >
       {/* Left: Logo + Mobile Hamburger */}

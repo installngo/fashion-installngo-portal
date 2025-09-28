@@ -1,14 +1,21 @@
 /* Default Theme */
 :root[data-theme="default"] {
-  --color-primary: #d66d50;
 
-  --color-primary-text: #d66d50;
+  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.15),
+                 0 -4px 8px rgba(0, 0, 0, 0.1);
+                   
+  --color-primary: #106EBE;
+
+  --color-primary-text: #106EBE;
   --color-secondary-text: #707b93;
 
+  /*Card Light Blue*/
+  --card-background: #F5F5F5;
+
   /*Primary Button*/
-  --button-primary: #d66d50;
+  --button-primary: #106EBE;
   --button-text-inverse: #ffffff;
-  --button-primary-hover: #c55a40;
+  --button-primary-hover: #0D5CA2;
 
   /*Secondary Button*/
   --button-secondary: #e5e7eb;
