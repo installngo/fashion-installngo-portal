@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // 🔹 Update course
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const body = await req.json();
+export async function PUT(req: Request, context: { params: { id: string } }) {
+  const { params } = context;
   const courseId = params.id;
+
+  const body = await req.json();
 
   if (!courseId) {
     return NextResponse.json({ error: "courseId is required" }, { status: 400 });
@@ -30,10 +29,8 @@ export async function PUT(
 }
 
 // 🔹 Suspend course (soft disable, not delete)
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: Request, context: { params: { id: string } }) {
+  const { params } = context;
   const courseId = params.id;
 
   if (!courseId) {
@@ -50,10 +47,8 @@ export async function PATCH(
 }
 
 // 🔹 Permanently delete course
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: Request, context: { params: { id: string } }) {
+  const { params } = context;
   const courseId = params.id;
 
   if (!courseId) {
