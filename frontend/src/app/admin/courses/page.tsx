@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Button from "@/components/ui/Button";
 import CourseCard from "@/components/CourseCard";
-import NewCoursePage from "./new/page";
+import CourseForm from "@/components/admin/CourseForm";
 
 interface Course {
   course_id: string;
@@ -80,8 +80,9 @@ export default function CoursesPage() {
         </div>
       )}
 
-      {/* Content Section */}
+      {/* Content */}
       <div>
+        {/* List Mode */}
         {mode === "list" && (
           <div>
             {loading ? (
@@ -100,8 +101,10 @@ export default function CoursesPage() {
                       course={{
                         image: course.thumbnail_url || "/default-course.png",
                         title: course.course_title,
-                        originalPrice: course.original_price?.toString() || "0",
-                        discountPrice: course.discount_price?.toString() || "0",
+                        originalPrice:
+                          course.original_price?.toString() || "0",
+                        discountPrice:
+                          course.discount_price?.toString() || "0",
                         discountPercentage: course.effective_price
                           ? `${(
                               ((course.original_price || 0) -
@@ -120,12 +123,13 @@ export default function CoursesPage() {
           </div>
         )}
 
+        {/* Create / Edit Mode */}
         {(mode === "create" || (mode === "edit" && selectedCourse)) && (
           <div className="mt-1">
-            <NewCoursePage
-              initialData={selectedCourse || undefined}
+            <CourseForm
               key={selectedCourse?.course_id || "new"}
-              onDone={handleBackToList} // <-- callback for Save/Cancel
+              initialData={selectedCourse || undefined}
+              onDone={handleBackToList}
             />
           </div>
         )}
