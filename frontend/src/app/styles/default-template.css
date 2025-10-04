@@ -16,7 +16,7 @@
 
   h4 {
     @apply text-base md:text-lg font-medium;
-    color: var(--color-secondary-text);
+    color: var(--color-primary-text);
   }
 
   h5 {

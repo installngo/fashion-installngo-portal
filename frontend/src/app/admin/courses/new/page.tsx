@@ -1,261 +1,431 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-
+import Image from "next/image";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
-import Modal from "@/components/ui/Modal";
+import Select from "@/components/ui/Select";
+import Option from "@/components/ui/Option";
+import RadioGroup from "@/components/ui/RadioGroup";
+import PriceInput from "@/components/ui/PriceInput";
+import { useLoading } from "@/context/LoadingContext";
+import { useToast } from "@/context/ToastContext";
+import { supabaseServer } from "@/lib/supabaseServer";
 
-// Type Definitions
-type Category = {
-  category_id: string;
-  category_title: string;
-};
+interface MasterOption {
+  code_master_id: string;
+  code_code: string;
+  display_name: string;
+  is_default: boolean;
+  sub_codes: {
+    sub_code_master_id: string;
+    code_code: string;
+    display_name: string;
+    is_default: boolean;
+  }[];
+}
 
-type Subcategory = {
-  subcategory_id: string;
-  subcategory_title: string;
-};
+interface CourseData {
+  course_id?: string;
+  course_title?: string;
+  course_description?: string;
+  thumbnail_url?: string;
+  category_code?: string;
+  sub_category_code?: string;
+  course_type?: "free" | "paid";
+  validity_code?: string;
+  original_price?: number;
+  discount_price?: number;
+  effective_price?: number;
+}
 
-type CourseType = {
-  type_code: string;
-  type_name: string;
-};
+export default function NewCoursePage({
+  initialData,
+  onDone, // callback from parent
+}: {
+  initialData?: CourseData;
+  onDone: () => void;
+}) {
+  const { show: showLoading, hide: hideLoading } = useLoading();
+  const { showToast } = useToast();
 
-type Duration = {
-  duration_code: string;
-  duration_name: string;
-};
+  const [courseTitle, setCourseTitle] = useState(
+    initialData?.course_title || ""
+  );
+  const [courseDescription, setCourseDescription] = useState(
+    initialData?.course_description || ""
+  );
+  const [courseType, setCourseType] = useState<"free" | "paid">(
+    initialData?.course_type || "free"
+  );
+  const [originalPrice, setOriginalPrice] = useState<number | "">(
+    initialData?.original_price ?? ""
+  );
+  const [discountPrice, setDiscountPrice] = useState<number | "">(
+    initialData?.discount_price ?? ""
+  );
 
-export default function NewCoursePage() {
-  const router = useRouter();
+  const effectivePrice =
+    originalPrice !== "" && discountPrice !== ""
+      ? Math.max(Number(originalPrice) - Number(discountPrice), 0)
+      : "";
 
-  // States
-  const [courseTitle, setCourseTitle] = useState("");
-  const [courseDescription, setCourseDescription] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [courseTypes, setCourseTypes] = useState<CourseType[]>([]);
-  const [selectedType, setSelectedType] = useState("");
-  const [durations, setDurations] = useState<Duration[]>([]);
-  const [selectedDuration, setSelectedDuration] = useState("");
-  const [price, setPrice] = useState<number>(0);
-  const [discountPrice, setDiscountPrice] = useState<number>(0);
-  const [effectivePrice, setEffectivePrice] = useState<number>(0);
-  const [status, setStatus] = useState<"DRAFT" | "ACTIVE" | "SUSPENDED">("DRAFT");
+  const [categories, setCategories] = useState<MasterOption[]>([]);
+  const [subCategories, setSubCategories] = useState<MasterOption["sub_codes"]>(
+    []
+  );
+  const [validities, setValidities] = useState<MasterOption[]>([]);
 
-  // Modal states
-  const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [isSubcategoryModalOpen, setSubcategoryModalOpen] = useState(false);
-  const [newCategoryTitle, setNewCategoryTitle] = useState("");
-  const [newSubcategoryTitle, setNewSubcategoryTitle] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    initialData?.category_code || ""
+  );
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>(
+    initialData?.sub_category_code || ""
+  );
+  const [selectedValidity, setSelectedValidity] = useState<string>(
+    initialData?.validity_code || ""
+  );
 
-  // Fetch categories
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
+    initialData?.thumbnail_url || null
+  );
+
+  const [saving, setSaving] = useState(false);
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  // Fetch master data
   useEffect(() => {
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data: Category[]) => setCategories(data));
-  }, []);
-
-  // Fetch subcategories when category changes
-  useEffect(() => {
-    if (selectedCategory) {
-      fetch(`/api/subcategories?categoryId=${selectedCategory}`)
-        .then((res) => res.json())
-        .then((data: Subcategory[]) => setSubcategories(data));
+    async function fetchMasterData(codeType: string) {
+      const res = await fetch("/api/master", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code_type: codeType }),
+      });
+      const data = await res.json();
+      return data.success ? data.data : [];
     }
-  }, [selectedCategory]);
 
-  // Fetch course types
-  useEffect(() => {
-    fetch("/api/course-types")
-      .then((res) => res.json())
-      .then((data: CourseType[]) => setCourseTypes(data));
-  }, []);
-
-  // Fetch durations when course type changes
-  useEffect(() => {
-    if (selectedType) {
-      fetch(`/api/course-durations?typeCode=${selectedType}`)
-        .then((res) => res.json())
-        .then((data: Duration[]) => setDurations(data));
-    }
-  }, [selectedType]);
-
-  // Auto calculate effective price
-  useEffect(() => {
-    let finalPrice = price - discountPrice;
-    if (finalPrice < 0) finalPrice = 0;
-    setEffectivePrice(finalPrice);
-  }, [price, discountPrice]);
-
-  // Submit course
-  const handleSubmit = async (statusCode: "DRAFT" | "ACTIVE" | "SUSPENDED") => {
-    const payload = {
-      course_title: courseTitle,
-      course_description: courseDescription,
-      thumbnail_url: thumbnailUrl,
-      category_id: selectedCategory,
-      subcategory_id: selectedSubcategory,
-      course_type_code: selectedType,
-      course_duration_code: selectedDuration,
-      price,
-      discount_price: discountPrice,
-      effective_price: effectivePrice,
-      status_code: statusCode,
-    };
-
-    const res = await fetch("/api/courses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    fetchMasterData("FASHIONCATEGORY").then((cats) => {
+      setCategories(cats);
+      if (!initialData?.category_code) {
+        const defaultCat = cats.find((c: MasterOption) => c.is_default);
+        if (defaultCat) setSelectedCategory(defaultCat.code_code);
+      }
     });
 
-    if (res.ok) {
-      router.push("/admin/courses");
+    fetchMasterData("COURSEVALIDITY").then((vals) => {
+      setValidities(vals);
+      if (!initialData?.validity_code) {
+        const defaultVal = vals.find((v: MasterOption) => v.is_default);
+        if (defaultVal) setSelectedValidity(defaultVal.code_code);
+      }
+    });
+  }, [token, initialData]);
+
+  // Update subcategories when category changes
+  useEffect(() => {
+    const category = categories.find((c) => c.code_code === selectedCategory);
+    if (category) {
+      setSubCategories(category.sub_codes || []);
+      if (!initialData?.sub_category_code) {
+        const defaultSub = category.sub_codes.find((sc) => sc.is_default);
+        setSelectedSubCategory(defaultSub ? defaultSub.code_code : "");
+      }
     } else {
-      alert("Failed to create course");
+      setSubCategories([]);
+      setSelectedSubCategory("");
     }
+  }, [selectedCategory, categories, initialData]);
+
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 1.5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showToast("File is too large. Max 1.5 MB allowed.", "error");
+      e.currentTarget.value = "";
+      return;
+    }
+
+    if (!["image/png", "image/jpeg"].includes(file.type)) {
+      showToast("Invalid file type. Only PNG and JPEG are allowed.", "error");
+      e.currentTarget.value = "";
+      return;
+    }
+
+    setThumbnailFile(file);
+    setThumbnailPreview(URL.createObjectURL(file));
   };
 
-  // Add category
-  const handleAddCategory = async () => {
-    if (!newCategoryTitle) return;
-    await fetch("/api/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category_title: newCategoryTitle }),
-    });
-    setCategoryModalOpen(false);
-    setNewCategoryTitle("");
-    const updatedCategories: Category[] = await (await fetch("/api/categories")).json();
-    setCategories(updatedCategories);
+  const blobLoader = ({ src }: { src: string }) => src;
+
+  const handleCancel = () => {
+    onDone(); // go back to list
   };
 
-  // Add subcategory
-  const handleAddSubcategory = async () => {
-    if (!newSubcategoryTitle || !selectedCategory) return;
-    await fetch("/api/subcategories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subcategory_title: newSubcategoryTitle, category_id: selectedCategory }),
-    });
-    setSubcategoryModalOpen(false);
-    setNewSubcategoryTitle("");
-    const updatedSubcategories: Subcategory[] = await (await fetch(`/api/subcategories?categoryId=${selectedCategory}`)).json();
-    setSubcategories(updatedSubcategories);
+  const handleSave = async () => {
+    if (!courseTitle.trim())
+      return showToast("Course title is required.", "error");
+    if (!courseDescription.trim())
+      return showToast("Course description is required.", "error");
+    if (!selectedCategory)
+      return showToast("Please select a category.", "error");
+    if (!selectedValidity)
+      return showToast("Please select a validity period.", "error");
+    if (
+      courseType === "paid" &&
+      (originalPrice === "" || Number(originalPrice) <= 0)
+    )
+      return showToast("Original price is required for paid courses.", "error");
+
+    setSaving(true);
+    showLoading();
+
+    try {
+      let thumbnailPath = initialData?.thumbnail_url || null;
+
+      if (thumbnailFile) {
+        const fileExt = thumbnailFile.name.split(".").pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const { data, error } = await supabaseServer.storage
+          .from("fashion-course-thumbnails")
+          .upload(fileName, thumbnailFile, { upsert: true });
+
+        if (error) throw new Error(error.message);
+
+        const { data: publicData } = supabaseServer.storage
+          .from("fashion-course-thumbnails")
+          .getPublicUrl(data.path);
+        thumbnailPath = publicData.publicUrl;
+      }
+
+      const payload = {
+        course_id: initialData?.course_id,
+        course_title: courseTitle.trim(),
+        course_description: courseDescription.trim(),
+        category_code: selectedCategory,
+        sub_category_code: selectedSubCategory,
+        course_type: courseType,
+        validity_code: selectedValidity,
+        original_price: courseType === "paid" ? originalPrice : null,
+        discount_price: courseType === "paid" ? discountPrice : null,
+        effective_price: courseType === "paid" ? effectivePrice : null,
+        thumbnail_url: thumbnailPath,
+      };
+
+      const res = await fetch("/api/courses", {
+        method: initialData ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        showToast(result.error || "Failed to save course", "error");
+      } else {
+        showToast(
+          initialData
+            ? "Course updated successfully!"
+            : "Course created successfully!",
+          "success"
+        );
+        onDone(); // back to list
+      }
+    } catch (err: unknown) {
+      let message = "Something went wrong. Please try again.";
+      if (err instanceof Error) message = err.message;
+      console.error(message);
+      showToast(message, "error");
+    } finally {
+      setSaving(false);
+      hideLoading();
+    }
   };
 
   return (
-    <main className="p-4 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">New Course</h1>
-      <form className="space-y-4">
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input placeholder="Course Title" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} required />
-          <Textarea placeholder="Course Description" value={courseDescription} onChange={(e) => setCourseDescription(e.target.value)} />
+    <section>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+        <h1 className="text-2xl font-bold">
+          {initialData ? "Edit Course" : "Create New Course"}
+        </h1>
+        <div className="flex gap-3">
+          <Button variant="danger" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSave} disabled={saving}>
+            {saving ? (initialData ? "Updating..." : "Saving...") : "Save"}
+          </Button>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <div className="flex gap-2">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="p-2 border border-gray-300 rounded-lg w-full"
-              required
-            >
-              <option value="">Select Category</option>
-              {categories.map((cat) => (
-                <option key={cat.category_id} value={cat.category_id}>{cat.category_title}</option>
-              ))}
-            </select>
-            <Button type="button" variant="primary" onClick={() => setCategoryModalOpen(true)}>Add</Button>
+      {/* Title + Description + Thumbnail */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="md:col-span-2">
+          <div className="mb-4">
+            <h4 className="block mb-2 font-medium">Course Title</h4>
+            <Input
+              placeholder="Enter course name"
+              variant="text"
+              fullWidth
+              value={courseTitle}
+              onChange={(e) => setCourseTitle(e.target.value)}
+            />
           </div>
-
-          <div className="flex gap-2">
-            <select
-              value={selectedSubcategory}
-              onChange={(e) => setSelectedSubcategory(e.target.value)}
-              className="p-2 border border-gray-300 rounded-lg w-full"
-            >
-              <option value="">Select Subcategory</option>
-              {subcategories.map((sub) => (
-                <option key={sub.subcategory_id} value={sub.subcategory_id}>{sub.subcategory_title}</option>
-              ))}
-            </select>
-            <Button type="button" variant="primary" onClick={() => setSubcategoryModalOpen(true)}>Add</Button>
+          <div>
+            <h4 className="block mb-2 font-medium">Course Description</h4>
+            <Textarea
+              placeholder="Write a short description..."
+              rows={4}
+              fullWidth
+              className="resize-none"
+              value={courseDescription}
+              onChange={(e) => setCourseDescription(e.target.value)}
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="p-2 border border-gray-300 rounded-lg w-full"
-            required
+        <div className="flex flex-col">
+          <h4 className="block mb-2 font-medium">Course Thumbnail</h4>
+          <label className="block w-full cursor-pointer flex-1">
+            <input
+              type="file"
+              accept="image/png, image/jpeg"
+              className="hidden"
+              onChange={handleThumbnailChange}
+            />
+            <div className="flex flex-col items-center justify-center h-full border-2 border-dashed border-gray-300 rounded-lg hover:border-[var(--color-primary)] transition p-2 text-center min-h-[120px]">
+              {thumbnailPreview ? (
+                <Image
+                  loader={blobLoader}
+                  src={thumbnailPreview}
+                  alt="Thumbnail preview"
+                  width={300}
+                  height={180}
+                  className="object-contain rounded-md"
+                />
+              ) : (
+                <span className="text-sm text-[var(--color-secondary-text)]">
+                  Recommended Image Size: 1200px x 720px, PNG or JPEG file
+                </span>
+              )}
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* Category & SubCategory */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 w-full md:w-2/3">
+        <div>
+          <h4 className="block mb-2 font-medium">Category</h4>
+          <Select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
           >
-            <option value="">Select Course Type</option>
-            {courseTypes.map((type) => (
-              <option key={type.type_code} value={type.type_code}>{type.type_name}</option>
+            <Option value="" disabled>
+              Select category
+            </Option>
+            {categories.map((c) => (
+              <Option key={c.code_master_id} value={c.code_code}>
+                {c.display_name}
+              </Option>
             ))}
-          </select>
-
-          <select
-            value={selectedDuration}
-            onChange={(e) => setSelectedDuration(e.target.value)}
-            className="p-2 border border-gray-300 rounded-lg w-full"
-            required
+          </Select>
+        </div>
+        <div>
+          <h4 className="block mb-2 font-medium">SubCategory</h4>
+          <Select
+            value={selectedSubCategory}
+            onChange={(e) => setSelectedSubCategory(e.target.value)}
+            disabled={!subCategories.length}
           >
-            <option value="">Select Duration</option>
-            {durations.map((dur) => (
-              <option key={dur.duration_code} value={dur.duration_code}>{dur.duration_name}</option>
+            <Option value="" disabled>
+              Select subcategory
+            </Option>
+            {subCategories.map((sc) => (
+              <Option key={sc.sub_code_master_id} value={sc.code_code}>
+                {sc.display_name}
+              </Option>
             ))}
-          </select>
+          </Select>
         </div>
+      </div>
 
-        <Input placeholder="Thumbnail URL" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} />
-
-        <div className="grid grid-cols-3 gap-4">
-          <Input type="number" placeholder="Price" value={price} onChange={(e) => setPrice(Number(e.target.value))} min={0} />
-          <Input type="number" placeholder="Discount" value={discountPrice} onChange={(e) => setDiscountPrice(Number(e.target.value))} min={0} />
-          <Input type="number" placeholder="Effective" value={effectivePrice} readOnly />
+      {/* Course Type + Validity */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 w-full md:w-2/3">
+        <div>
+          <h4 className="block mb-2 font-medium">Course Type</h4>
+          <RadioGroup
+            name="courseType"
+            options={[
+              { label: "Free Course", value: "free" },
+              { label: "Paid Course", value: "paid" },
+            ]}
+            value={courseType}
+            onChange={(val) => setCourseType(val as "free" | "paid")}
+          />
         </div>
-
-        <select value={status} onChange={(e) => setStatus(e.target.value as "DRAFT" | "ACTIVE" | "SUSPENDED")} className="p-2 border border-gray-300 rounded-lg w-full">
-          <option value="DRAFT">Draft</option>
-          <option value="ACTIVE">Active</option>
-          <option value="SUSPENDED">Suspended</option>
-        </select>
-
-        <div className="flex gap-4 mt-4 flex-wrap">
-          <Button type="button" variant="primary" onClick={() => handleSubmit("DRAFT")}>Save</Button>
-          <Button type="button" variant="primary" onClick={() => handleSubmit("ACTIVE")}>Publish</Button>
-          <Button type="button" variant="secondary" onClick={() => router.push("/admin/courses")}>Cancel</Button>
+        <div>
+          <h4 className="block mb-2 font-medium">Course Validity</h4>
+          <Select
+            value={selectedValidity}
+            onChange={(e) => setSelectedValidity(e.target.value)}
+          >
+            <Option value="" disabled>
+              Select validity
+            </Option>
+            {validities.map((v) => (
+              <Option key={v.code_master_id} value={v.code_code}>
+                {v.display_name}
+              </Option>
+            ))}
+          </Select>
         </div>
-      </form>
+      </div>
 
-      {/* Category Modal */}
-      <Modal isOpen={isCategoryModalOpen} onClose={() => setCategoryModalOpen(false)} title="Add Category">
-        <Input placeholder="Category Title" value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
-        <div className="flex justify-end mt-4 gap-2">
-          <Button variant="secondary" onClick={() => setCategoryModalOpen(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleAddCategory}>Add</Button>
+      {/* Pricing (Paid only) */}
+      {courseType === "paid" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 w-full md:w-2/3">
+          <div>
+            <h4 className="block mb-2 font-medium">Original Price</h4>
+            <PriceInput
+              placeholder="Enter price"
+              value={originalPrice}
+              onChange={(e) =>
+                setOriginalPrice(e.target.value ? Number(e.target.value) : "")
+              }
+            />
+          </div>
+          <div>
+            <h4 className="block mb-2 font-medium">Discount Price</h4>
+            <PriceInput
+              placeholder="Enter discount"
+              value={discountPrice}
+              onChange={(e) =>
+                setDiscountPrice(e.target.value ? Number(e.target.value) : "")
+              }
+            />
+          </div>
+          <div>
+            <h4 className="block mb-2 font-medium">Effective Price</h4>
+            <PriceInput
+              placeholder="Auto-calculated"
+              value={effectivePrice || 0}
+              calculated
+            />
+          </div>
         </div>
-      </Modal>
-
-      {/* Subcategory Modal */}
-      <Modal isOpen={isSubcategoryModalOpen} onClose={() => setSubcategoryModalOpen(false)} title="Add Subcategory">
-        <Input placeholder="Subcategory Title" value={newSubcategoryTitle} onChange={(e) => setNewSubcategoryTitle(e.target.value)} />
-        <div className="flex justify-end mt-4 gap-2">
-          <Button variant="secondary" onClick={() => setSubcategoryModalOpen(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleAddSubcategory}>Add</Button>
-        </div>
-      </Modal>
-    </main>
+      )}
+    </section>
   );
 }

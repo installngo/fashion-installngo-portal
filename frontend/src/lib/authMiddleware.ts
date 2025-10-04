@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 
 // Define the payload type returned from JWT
@@ -28,12 +28,8 @@ export function verifyJWT(req: NextRequest): AuthPayload | null {
 
 /**
  * Middleware helper to require authentication in API routes.
- * Returns AuthPayload if valid, or sends 401 response.
+ * Returns AuthPayload if valid, or null if invalid.
  */
-export function requireAuth(req: NextRequest) {
-  const user = verifyJWT(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return user;
+export function requireAuth(req: NextRequest): AuthPayload | null {
+  return verifyJWT(req);
 }

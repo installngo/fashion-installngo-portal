@@ -1,18 +1,42 @@
+"use client";
+
 import { SelectHTMLAttributes } from "react";
 import clsx from "clsx";
 
-type SelectProps = SelectHTMLAttributes<HTMLSelectElement>;
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+  fullWidth?: boolean;
+  fixedWidth?: string;
+  uppercase?: boolean;
+};
 
-export default function Select({ className, children, ...props }: SelectProps) {
+export default function Select({
+  fullWidth,
+  fixedWidth,
+  uppercase,
+  className,
+  children,
+  ...props
+}: SelectProps) {
   return (
-    <select
-      {...props}
+    <div
       className={clsx(
-        "w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500",
-        className
+        "relative flex items-center",
+        fullWidth && "w-full",
+        fixedWidth && fixedWidth
       )}
     >
-      {children}
-    </select>
+      <select
+        {...props}
+        className={clsx(
+          "p-2 rounded-md border text-sm font-base transition-colors w-full",
+          "text-[var(--color-primary-text)] placeholder-[var(--color-secondary-text)]",
+          "border-[var(--color-primary)] border-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]",
+          uppercase && "uppercase",
+          className
+        )}
+      >
+        {children}
+      </select>
+    </div>
   );
 }

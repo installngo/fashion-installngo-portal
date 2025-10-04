@@ -26,7 +26,10 @@ export default function Sidebar({ sidebarOpen, closeSidebar }: SidebarProps) {
       } md:translate-x-0`}
       style={{ height: "calc(100vh - 4.5rem)" }}
     >
-      <aside className="bg-[var(--color-primary)] text-white rounded-xl shadow-[var(--card-shadow)] m-4 md:m-2 mb-4 w-64 h-full flex flex-col" style={{ width: "200px" }}>
+      <aside
+        className="bg-[var(--color-primary)] text-white rounded-xl shadow-[var(--card-shadow)] m-4 md:m-2 mb-4 w-64 h-full flex flex-col"
+        style={{ width: "200px" }}
+      >
         {/* Navigation (scrollable) */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-2">
           {navItems.map((item) => {
